@@ -35,7 +35,7 @@ export default function Sidebar({
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
-        <h1>FieldV1</h1>
+        <img src="/field_wordmark.png" alt="Field" className="wordmark" />
         <p>Local visual research</p>
       </div>
 
