@@ -159,24 +159,20 @@
 
 .field-board {
   flex: 1;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 16px;
+  overflow: auto;
+  padding: 12px;
 }
 
 .field-board-inner {
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
-  min-height: 100%;
-  width: max-content;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  align-items: start;
+  justify-content: center;
 }
 
 .field-column {
-  width: 400px;
-  min-width: 320px;
-  max-width: 480px;
-  flex: 0 0 auto;
+  width: 100%;
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 0;
@@ -216,6 +212,47 @@
   font-size: 0.75rem;
   color: #333;
   flex-shrink: 0;
+}
+
+@media (min-width: 480px) {
+  .field-board {
+    padding: 16px;
+  }
+
+  .field-board-inner {
+    gap: 16px;
+  }
+}
+
+@media (min-width: 768px) {
+  .field-board-inner {
+    grid-template-columns: repeat(auto-fit, minmax(360px, 420px));
+  }
+
+  .field-column {
+    min-width: 360px;
+    max-width: 420px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .field-board {
+    padding: 20px;
+  }
+
+  .field-board-inner {
+    gap: 18px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .field-board {
+    padding: 24px;
+  }
+
+  .field-board-inner {
+    gap: 20px;
+  }
 }
 
 .field-dropzone {
