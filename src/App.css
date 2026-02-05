@@ -17,10 +17,11 @@
   overflow-y: auto;
 }
 
-.sidebar-header h1 {
-  margin: 0;
-  font-size: 1.1rem;
-  letter-spacing: 0.02em;
+.wordmark {
+  display: block;
+  max-width: 170px;
+  width: 100%;
+  height: auto;
 }
 
 .sidebar-header p {
