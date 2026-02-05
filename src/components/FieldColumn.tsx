@@ -176,59 +176,63 @@ export default function FieldColumn({
         <span className="field-meta">{images.length} images</span>
       </div>
 
-      <div
-        className={`field-dropzone${dropActive ? ' is-active' : ''}`}
-        onDragEnter={(event) => {
-          event.preventDefault()
-          event.stopPropagation()
-          if (isFileDrag(event)) {
-            setDropActive(true)
-          }
-        }}
-        onDragOver={(event) => {
-          event.preventDefault()
-          event.stopPropagation()
-          if (isFileDrag(event)) {
-            if (event.dataTransfer) {
-              event.dataTransfer.dropEffect = 'copy'
-            }
-          }
-        }}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        <label className="dropzone-label">
-          <input
-            type="file"
-            accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-            multiple
-            onChange={handleFileChange}
-          />
-          <span className="dropzone-title">Drop images here</span>
-          <span className="dropzone-subtitle">or click to browse (JPG, PNG, WEBP)</span>
-        </label>
-      </div>
-      {errorMessage ? <p className="field-error">{errorMessage}</p> : null}
-
-      <SortableContext items={field.imageIds} strategy={verticalListSortingStrategy}>
+      <div className="field-body">
         <div
-          ref={setNodeRef}
-          className={`field-images${isOver ? ' is-over' : ''}`}
+          className={`field-dropzone${dropActive ? ' is-active' : ''}`}
+          onDragEnter={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            if (isFileDrag(event)) {
+              setDropActive(true)
+            }
+          }}
+          onDragOver={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            if (isFileDrag(event)) {
+              if (event.dataTransfer) {
+                event.dataTransfer.dropEffect = 'copy'
+              }
+            }
+          }}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
         >
-          {images.length === 0 ? (
-            <div className="empty-state">Drop images here</div>
-          ) : (
-            images.map((image) => (
-              <ImageCard
-                key={image.id}
-                image={image}
-                onNoteChange={onUpdateImageNote}
-                onRemove={onRemoveImage}
-              />
-            ))
-          )}
+          <label className="dropzone-label">
+            <input
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+              multiple
+              onChange={handleFileChange}
+            />
+            <span className="dropzone-title">Drop images here</span>
+            <span className="dropzone-subtitle">
+              or click to browse (JPG, PNG, WEBP)
+            </span>
+          </label>
         </div>
-      </SortableContext>
+        {errorMessage ? <p className="field-error">{errorMessage}</p> : null}
+
+        <SortableContext items={field.imageIds} strategy={verticalListSortingStrategy}>
+          <div
+            ref={setNodeRef}
+            className={`field-images${isOver ? ' is-over' : ''}`}
+          >
+            {images.length === 0 ? (
+              <div className="empty-state">Drop images here</div>
+            ) : (
+              images.map((image) => (
+                <ImageCard
+                  key={image.id}
+                  image={image}
+                  onNoteChange={onUpdateImageNote}
+                  onRemove={onRemoveImage}
+                />
+              ))
+            )}
+          </div>
+        </SortableContext>
+      </div>
     </section>
   )
 }
