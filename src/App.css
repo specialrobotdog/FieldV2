@@ -168,7 +168,8 @@
   grid-template-columns: 1fr;
   gap: 12px;
   align-items: start;
-  justify-content: center;
+  justify-content: start;
+  align-content: start;
 }
 
 .field-column {
