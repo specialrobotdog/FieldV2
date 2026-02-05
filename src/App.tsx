@@ -43,6 +43,7 @@ function App() {
         images={state.images}
         onAddField={actions.addField}
         onResetLibrary={actions.resetLibrary}
+        onRemoveField={actions.removeField}
       />
       <main className="main">
         <div className="main-header">

@@ -49,6 +49,7 @@ export type FieldActions = {
   removeImage: (imageId: string) => void
   moveImage: (imageId: string, targetFieldId: string, targetIndex: number) => void
   resetLibrary: () => void
+  removeField: (fieldId: string) => void
 }
 
 export function useFieldState() {
@@ -191,6 +192,21 @@ export function useFieldState() {
     setState(createDefaultState())
   }, [])
 
+  const removeField = useCallback((fieldId: string) => {
+    setState((prev) => {
+      const remainingFields = prev.fields.filter((field) => field.id !== fieldId)
+      const remainingFieldIds = new Set(remainingFields.map((field) => field.id))
+      const images = prev.images.filter((image) => remainingFieldIds.has(image.fieldId))
+      const fields =
+        remainingFields.length > 0 ? remainingFields : createDefaultState().fields
+
+      return {
+        fields,
+        images,
+      }
+    })
+  }, [])
+
   const actions: FieldActions = useMemo(
     () => ({
       addField,
@@ -200,6 +216,7 @@ export function useFieldState() {
       removeImage,
       moveImage,
       resetLibrary,
+      removeField,
     }),
     [
       addField,
@@ -209,6 +226,7 @@ export function useFieldState() {
       removeImage,
       moveImage,
       resetLibrary,
+      removeField,
     ]
   )
 
