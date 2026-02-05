@@ -40,6 +40,33 @@ const extractFiles = (dataTransfer: DataTransfer | null): File[] => {
   return []
 }
 
+const isHttpUrl = (value: string) => {
+  try {
+    const url = new URL(value)
+    return url.protocol === 'http:' || url.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+const extractImageSrcFromHtml = (html: string) => {
+  if (typeof DOMParser !== 'undefined') {
+    try {
+      const doc = new DOMParser().parseFromString(html, 'text/html')
+      const img = doc.querySelector('img')
+      const src = img?.getAttribute('src')
+      if (src) {
+        return src
+      }
+    } catch {
+      // Ignore parse errors and fall back to regex.
+    }
+  }
+
+  const match = html.match(/<img[^>]+src=["']([^"']+)["']/i)
+  return match?.[1] ?? null
+}
+
 const extractUrls = (dataTransfer: DataTransfer | null): string[] => {
   if (!dataTransfer) {
     return []
@@ -65,23 +92,38 @@ const extractUrls = (dataTransfer: DataTransfer | null): string[] => {
     }
   }
 
-  return candidates
+  if (candidates.length === 0) {
+    const html = dataTransfer.getData('text/html')
+    if (html) {
+      const src = extractImageSrcFromHtml(html)
+      if (src) {
+        candidates.push(src)
+      }
+    }
+  }
+
+  return candidates.map((value) => value.trim()).filter(isHttpUrl)
 }
 
 const fetchImageFromUrl = async (url: string): Promise<File | null> => {
   try {
+    if (!isHttpUrl(url)) {
+      return null
+    }
+
     const response = await fetch(url)
     if (!response.ok) {
       return null
     }
-    const contentType = response.headers.get('content-type') ?? ''
-    if (!contentType.startsWith('image/')) {
+    const contentType = (response.headers.get('content-type') ?? '').toLowerCase()
+    const mimeType = contentType.split(';')[0].trim()
+    if (!ALLOWED_TYPES.has(mimeType)) {
       return null
     }
     const blob = await response.blob()
-    const extension = contentType.split('/')[1]?.split(';')[0] ?? 'png'
+    const extension = mimeType.split('/')[1] ?? 'png'
     const filename = `image.${extension}`
-    return new File([blob], filename, { type: blob.type || contentType })
+    return new File([blob], filename, { type: mimeType })
   } catch {
     return null
   }
@@ -104,7 +146,9 @@ const isFileDrag = (event: DragEvent<HTMLElement>) => {
         type === 'Files' ||
         type === 'application/x-moz-file' ||
         type === 'public.file-url' ||
-        type === 'text/uri-list'
+        type === 'text/uri-list' ||
+        type === 'text/plain' ||
+        type === 'text/html'
     )
   }
   return false
@@ -191,6 +235,7 @@ export default function FieldColumn({
     if (droppedFiles.length === 0) {
       const urls = extractUrls(event.dataTransfer ?? null)
       if (urls.length === 0) {
+        setErrorMessage('No image URL found.')
         return
       }
 
