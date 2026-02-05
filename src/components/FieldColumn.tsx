@@ -147,6 +147,8 @@ export default function FieldColumn({
   }
 
   const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    event.stopPropagation()
     if (
       event.relatedTarget &&
       event.currentTarget.contains(event.relatedTarget as Node)
@@ -178,12 +180,14 @@ export default function FieldColumn({
         className={`field-dropzone${dropActive ? ' is-active' : ''}`}
         onDragEnter={(event) => {
           event.preventDefault()
+          event.stopPropagation()
           if (isFileDrag(event)) {
             setDropActive(true)
           }
         }}
         onDragOver={(event) => {
           event.preventDefault()
+          event.stopPropagation()
           if (isFileDrag(event)) {
             if (event.dataTransfer) {
               event.dataTransfer.dropEffect = 'copy'

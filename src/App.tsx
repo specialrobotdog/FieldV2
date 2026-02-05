@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import './App.css'
 import FieldBoard from './components/FieldBoard'
 import Sidebar from './components/Sidebar'
@@ -5,6 +6,23 @@ import { useFieldState } from './hooks/useFieldState'
 
 function App() {
   const { state, actions } = useFieldState()
+
+  useEffect(() => {
+    const preventDocumentDrop = (event: DragEvent) => {
+      if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+    }
+
+    document.addEventListener('dragover', preventDocumentDrop)
+    document.addEventListener('drop', preventDocumentDrop)
+
+    return () => {
+      document.removeEventListener('dragover', preventDocumentDrop)
+      document.removeEventListener('drop', preventDocumentDrop)
+    }
+  }, [])
 
   return (
     <div className="app">
