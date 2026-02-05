@@ -8,6 +8,7 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  height: 100%;
 }
 
 * {
@@ -17,10 +18,11 @@
 body {
   margin: 0;
   background: #fff;
+  height: 100%;
 }
 
 #root {
-  min-height: 100vh;
+  height: 100vh;
 }
 
 button,
