@@ -179,38 +179,60 @@
   color: #6e6b67;
 }
 
-.field-actions {
-  display: flex;
-  align-items: center;
+.field-dropzone {
+  border: 1px dashed #cfcac2;
+  border-radius: 10px;
+  background: #faf9f6;
+  padding: 12px;
+  text-align: center;
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
 
-.file-button {
+.field-dropzone.is-active {
+  border-color: #9a958e;
+  background: #f0ede6;
+}
+
+.dropzone-label {
   position: relative;
-  overflow: hidden;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid #cfcac2;
-  padding: 6px 10px;
-  border-radius: 6px;
-  background: #fefefe;
-  font-size: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   cursor: pointer;
+  width: 100%;
+  align-items: center;
 }
 
-.file-button input {
+.dropzone-label input {
   position: absolute;
   inset: 0;
   opacity: 0;
   cursor: pointer;
 }
 
+.dropzone-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #3d3a36;
+}
+
+.dropzone-subtitle {
+  font-size: 0.75rem;
+  color: #6e6b67;
+}
+
+.field-error {
+  margin: -4px 0 0;
+  color: #8a4b3a;
+  font-size: 0.75rem;
+}
+
 .field-images {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   padding: 6px;
-  min-height: 140px;
+  min-height: 160px;
   border-radius: 10px;
   background: #faf9f6;
   border: 1px dashed transparent;
@@ -223,11 +245,10 @@
 }
 
 .empty-state {
-  grid-column: 1 / -1;
   text-align: center;
   color: #7a756f;
   font-size: 0.8rem;
-  padding: 16px 8px;
+  padding: 20px 8px;
 }
 
 .image-card {
@@ -238,6 +259,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  width: 100%;
 }
 
 .image-toolbar {

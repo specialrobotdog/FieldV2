@@ -17,7 +17,7 @@ export default function ImageCard({ image, onNoteChange, onRemove }: ImageCardPr
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: isDragging ? undefined : transition ?? 'transform 160ms ease',
     opacity: isDragging ? 0.65 : 1,
   }
 

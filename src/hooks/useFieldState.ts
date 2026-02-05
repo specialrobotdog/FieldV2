@@ -44,7 +44,7 @@ const readFileAsDataUrl = (file: File) =>
 export type FieldActions = {
   addField: (name?: string) => void
   renameField: (fieldId: string, name: string) => void
-  addImages: (fieldId: string, files: FileList | null) => Promise<void>
+  addImages: (fieldId: string, files: File[]) => Promise<void>
   updateImageNote: (imageId: string, note: string) => void
   removeImage: (imageId: string) => void
   moveImage: (imageId: string, targetFieldId: string, targetIndex: number) => void
@@ -85,14 +85,14 @@ export function useFieldState() {
     }))
   }, [])
 
-  const addImages = useCallback(async (fieldId: string, files: FileList | null) => {
-    if (!files || files.length === 0) {
+  const addImages = useCallback(async (fieldId: string, files: File[]) => {
+    if (files.length === 0) {
       return
     }
 
     const startTime = Date.now()
     const items = await Promise.all(
-      Array.from(files).map(async (file, index) => ({
+      files.map(async (file, index) => ({
         id: nanoid(),
         fieldId,
         src: await readFileAsDataUrl(file),
@@ -154,48 +154,30 @@ export function useFieldState() {
           return prev
         }
 
+        if (sourceFieldId !== targetFieldId) {
+          return prev
+        }
+
         const clampedIndex = Math.max(
           0,
           Math.min(targetIndex, targetField.imageIds.length)
         )
 
-        if (sourceFieldId === targetFieldId) {
-          const currentIndex = sourceField.imageIds.indexOf(imageId)
-          if (currentIndex === -1 || currentIndex === clampedIndex) {
-            return prev
-          }
-
-          const reordered = arrayMove(
-            sourceField.imageIds,
-            currentIndex,
-            clampedIndex
-          )
-
-          return {
-            ...prev,
-            fields: prev.fields.map((field) =>
-              field.id === sourceFieldId ? { ...field, imageIds: reordered } : field
-            ),
-          }
+        const currentIndex = sourceField.imageIds.indexOf(imageId)
+        if (currentIndex === -1 || currentIndex === clampedIndex) {
+          return prev
         }
 
+        const reordered = arrayMove(
+          sourceField.imageIds,
+          currentIndex,
+          clampedIndex
+        )
+
         return {
-          fields: prev.fields.map((field) => {
-            if (field.id === sourceFieldId) {
-              return {
-                ...field,
-                imageIds: field.imageIds.filter((id) => id !== imageId),
-              }
-            }
-            if (field.id === targetFieldId) {
-              const nextIds = [...field.imageIds]
-              nextIds.splice(clampedIndex, 0, imageId)
-              return { ...field, imageIds: nextIds }
-            }
-            return field
-          }),
-          images: prev.images.map((item) =>
-            item.id === imageId ? { ...item, fieldId: targetFieldId } : item
+          ...prev,
+          fields: prev.fields.map((field) =>
+            field.id === sourceFieldId ? { ...field, imageIds: reordered } : field
           ),
         }
       })

@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import {
+  closestCenter,
   DndContext,
   PointerSensor,
   useSensor,
@@ -12,7 +13,7 @@ import FieldColumn from './FieldColumn'
 type FieldBoardProps = {
   fields: Field[]
   images: ImageItem[]
-  onAddImages: (fieldId: string, files: FileList | null) => Promise<void>
+  onAddImages: (fieldId: string, files: File[]) => Promise<void>
   onRenameField: (fieldId: string, name: string) => void
   onUpdateImageNote: (imageId: string, note: string) => void
   onRemoveImage: (imageId: string) => void
@@ -54,6 +55,10 @@ export default function FieldBoard({
       return
     }
 
+    if (activeFieldId !== overFieldId) {
+      return
+    }
+
     const targetField = fields.find((field) => field.id === overFieldId)
     if (!targetField) {
       return
@@ -72,7 +77,11 @@ export default function FieldBoard({
 
   return (
     <div className="field-board">
-      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
         <div className="field-board-inner">
           {fields.map((field) => {
             const fieldImages = field.imageIds
