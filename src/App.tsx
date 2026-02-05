@@ -16,7 +16,10 @@ function App() {
 
       const hasFiles = dataTransfer.files && dataTransfer.files.length > 0
       const types = dataTransfer.types ? Array.from(dataTransfer.types) : []
-      const hasUrl = types.includes('text/uri-list')
+      const hasUrl =
+        types.includes('text/uri-list') ||
+        types.includes('text/plain') ||
+        types.includes('text/html')
 
       if (hasFiles || hasUrl) {
         event.preventDefault()
