@@ -9,7 +9,16 @@ function App() {
 
   useEffect(() => {
     const preventDocumentDrop = (event: DragEvent) => {
-      if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
+      const dataTransfer = event.dataTransfer
+      if (!dataTransfer) {
+        return
+      }
+
+      const hasFiles = dataTransfer.files && dataTransfer.files.length > 0
+      const types = dataTransfer.types ? Array.from(dataTransfer.types) : []
+      const hasUrl = types.includes('text/uri-list')
+
+      if (hasFiles || hasUrl) {
         event.preventDefault()
         event.stopPropagation()
       }

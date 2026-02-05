@@ -40,6 +40,53 @@ const extractFiles = (dataTransfer: DataTransfer | null): File[] => {
   return []
 }
 
+const extractUrls = (dataTransfer: DataTransfer | null): string[] => {
+  if (!dataTransfer) {
+    return []
+  }
+
+  const candidates: string[] = []
+  const uriList = dataTransfer.getData('text/uri-list')
+  if (uriList) {
+    uriList
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith('#'))
+      .forEach((line) => candidates.push(line))
+  }
+
+  if (candidates.length === 0) {
+    const plain = dataTransfer.getData('text/plain')
+    if (plain) {
+      const match = plain.match(/https?:\/\/\S+/)
+      if (match?.[0]) {
+        candidates.push(match[0])
+      }
+    }
+  }
+
+  return candidates
+}
+
+const fetchImageFromUrl = async (url: string): Promise<File | null> => {
+  try {
+    const response = await fetch(url)
+    if (!response.ok) {
+      return null
+    }
+    const contentType = response.headers.get('content-type') ?? ''
+    if (!contentType.startsWith('image/')) {
+      return null
+    }
+    const blob = await response.blob()
+    const extension = contentType.split('/')[1]?.split(';')[0] ?? 'png'
+    const filename = `image.${extension}`
+    return new File([blob], filename, { type: blob.type || contentType })
+  } catch {
+    return null
+  }
+}
+
 const isFileDrag = (event: DragEvent<HTMLElement>) => {
   const dataTransfer = event.dataTransfer
   if (!dataTransfer) {
@@ -56,7 +103,8 @@ const isFileDrag = (event: DragEvent<HTMLElement>) => {
       (type) =>
         type === 'Files' ||
         type === 'application/x-moz-file' ||
-        type === 'public.file-url'
+        type === 'public.file-url' ||
+        type === 'text/uri-list'
     )
   }
   return false
@@ -141,6 +189,20 @@ export default function FieldColumn({
     setDropActive(false)
     const droppedFiles = extractFiles(event.dataTransfer ?? null)
     if (droppedFiles.length === 0) {
+      const urls = extractUrls(event.dataTransfer ?? null)
+      if (urls.length === 0) {
+        return
+      }
+
+      for (const url of urls) {
+        const file = await fetchImageFromUrl(url)
+        if (file) {
+          await handleFiles([file])
+          return
+        }
+      }
+
+      setErrorMessage('Unable to load image from URL.')
       return
     }
     await handleFiles(droppedFiles)
