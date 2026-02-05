@@ -6,6 +6,7 @@ type SidebarProps = {
   images: ImageItem[]
   onAddField: (name?: string) => void
   onResetLibrary: () => void
+  onRemoveField: (fieldId: string) => void
 }
 
 const countImages = (fields: Field[], images: ImageItem[]) => {
@@ -22,6 +23,7 @@ export default function Sidebar({
   images,
   onAddField,
   onResetLibrary,
+  onRemoveField,
 }: SidebarProps) {
   const [draft, setDraft] = useState('')
   const counts = useMemo(() => countImages(fields, images), [fields, images])
@@ -58,8 +60,17 @@ export default function Sidebar({
         <ul className="field-list">
           {fields.map((field) => (
             <li key={field.id} className="field-item">
-              <span className="field-name">{field.name}</span>
-              <span className="field-count">{counts.get(field.id) ?? 0}</span>
+              <span className="field-name">
+                {field.name}{' '}
+                <span className="field-count">({counts.get(field.id) ?? 0})</span>
+              </span>
+              <button
+                type="button"
+                className="field-delete"
+                onClick={() => onRemoveField(field.id)}
+              >
+                Delete
+              </button>
             </li>
           ))}
         </ul>
