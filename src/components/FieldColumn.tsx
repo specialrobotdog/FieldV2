@@ -16,6 +16,8 @@ type FieldColumnProps = {
 const MAX_FILE_SIZE = 8 * 1024 * 1024
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp']
+const PROXY_ERROR_MESSAGE =
+  'This site blocks importing. Open image in a new tab and drag the direct image, or download and drag from desktop.'
 
 const isAllowedFile = (file: File) => {
   if (ALLOWED_TYPES.has(file.type)) {
@@ -105,27 +107,32 @@ const extractUrls = (dataTransfer: DataTransfer | null): string[] => {
   return candidates.map((value) => value.trim()).filter(isHttpUrl)
 }
 
-const fetchImageFromUrl = async (url: string): Promise<File | null> => {
+const fetchImageFromUrl = async (
+  url: string
+): Promise<{ file: File | null; error?: 'proxy' }> => {
   try {
     if (!isHttpUrl(url)) {
-      return null
+      return { file: null, error: 'proxy' }
     }
 
-    const response = await fetch(url)
+    const response = await fetch(`/api/image-proxy?url=${encodeURIComponent(url)}`)
     if (!response.ok) {
-      return null
+      return { file: null, error: 'proxy' }
     }
-    const contentType = (response.headers.get('content-type') ?? '').toLowerCase()
-    const mimeType = contentType.split(';')[0].trim()
-    if (!ALLOWED_TYPES.has(mimeType)) {
-      return null
-    }
+
     const blob = await response.blob()
+    const contentType =
+      (response.headers.get('content-type') ?? blob.type).toLowerCase()
+    const mimeType = contentType.split(';')[0].trim()
+    if (!mimeType.startsWith('image/')) {
+      return { file: null, error: 'proxy' }
+    }
+
     const extension = mimeType.split('/')[1] ?? 'png'
     const filename = `image.${extension}`
-    return new File([blob], filename, { type: mimeType })
+    return { file: new File([blob], filename, { type: mimeType || blob.type }) }
   } catch {
-    return null
+    return { file: null, error: 'proxy' }
   }
 }
 
@@ -240,14 +247,14 @@ export default function FieldColumn({
       }
 
       for (const url of urls) {
-        const file = await fetchImageFromUrl(url)
-        if (file) {
-          await handleFiles([file])
+        const result = await fetchImageFromUrl(url)
+        if (result.file) {
+          await handleFiles([result.file])
           return
         }
       }
 
-      setErrorMessage('Unable to load image from URL.')
+      setErrorMessage(PROXY_ERROR_MESSAGE)
       return
     }
     await handleFiles(droppedFiles)
