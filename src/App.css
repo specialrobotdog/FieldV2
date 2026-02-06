@@ -333,6 +333,34 @@
   display: block;
 }
 
+.url-form {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.url-input {
+  flex: 1;
+  border: 1px solid #d9d9d9;
+  background: #fff;
+  padding: 6px 8px;
+  font-size: 0.8rem;
+}
+
+.url-button {
+  border: 1px solid #d9d9d9;
+  background: #fff;
+  padding: 6px 8px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.url-error {
+  margin: -4px 0 0;
+  color: #7a3d2c;
+  font-size: 0.75rem;
+}
+
 .field-error {
   margin: -4px 0 0;
   color: #7a3d2c;

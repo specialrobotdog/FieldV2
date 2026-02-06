@@ -4,6 +4,7 @@ import {
   type ChangeEvent,
   type DragEvent,
   type ClipboardEvent,
+  type FormEvent,
 } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
@@ -70,6 +71,35 @@ const extractUrlFromTransfer = (
   return null
 }
 
+const fetchImageFileFromUrl = async (
+  url: string,
+  blockedMessage: string
+): Promise<{ file: File | null; error?: string }> => {
+  if (!isHttpUrl(url)) {
+    return { file: null, error: 'Please enter a valid http/https URL.' }
+  }
+
+  try {
+    const response = await fetch(url, { mode: 'cors' })
+    if (!response.ok) {
+      return { file: null, error: blockedMessage }
+    }
+    const blob = await response.blob()
+    if (!blob.type.startsWith('image/')) {
+      return { file: null, error: blockedMessage }
+    }
+    if (!ALLOWED_TYPES.has(blob.type)) {
+      return { file: null, error: 'Only JPG, PNG, or WEBP images are supported.' }
+    }
+
+    const extension = blob.type.split('/')[1] ?? 'png'
+    const filename = `image.${extension}`
+    return { file: new File([blob], filename, { type: blob.type }) }
+  } catch {
+    return { file: null, error: blockedMessage }
+  }
+}
+
 const extractImageFromTransfer = async (
   dataTransfer: DataTransfer | ClipboardData | null
 ): Promise<{ files: File[]; error?: string }> => {
@@ -98,37 +128,14 @@ const extractImageFromTransfer = async (
     return { files: [], error: 'No image URL found.' }
   }
 
-  if (!isHttpUrl(url)) {
-    return { files: [], error: 'Invalid URL.' }
+  const result = await fetchImageFileFromUrl(
+    url,
+    'This site blocks direct import — try copy image, then paste here.'
+  )
+  if (result.file) {
+    return { files: [result.file] }
   }
-
-  try {
-    const response = await fetch(url, { mode: 'cors' })
-    if (!response.ok) {
-      return {
-        files: [],
-        error: 'This site blocks direct import — try copy image, then paste here.',
-      }
-    }
-    const blob = await response.blob()
-    if (!blob.type.startsWith('image/')) {
-      return { files: [], error: 'URL did not return an image.' }
-    }
-    if (!ALLOWED_TYPES.has(blob.type)) {
-      return { files: [], error: 'Only JPG, PNG, or WEBP images are supported.' }
-    }
-    const objectUrl = URL.createObjectURL(blob)
-    URL.revokeObjectURL(objectUrl)
-
-    const extension = blob.type.split('/')[1] ?? 'png'
-    const filename = `image.${extension}`
-    return { files: [new File([blob], filename, { type: blob.type })] }
-  } catch {
-    return {
-      files: [],
-      error: 'This site blocks direct import — try copy image, then paste here.',
-    }
-  }
+  return { files: [], error: result.error }
 }
 
 const isFileDrag = (event: DragEvent<HTMLElement>) => {
@@ -170,6 +177,8 @@ export default function FieldColumn({
   const [draftName, setDraftName] = useState(field.name)
   const [dropActive, setDropActive] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [urlInput, setUrlInput] = useState('')
+  const [urlError, setUrlError] = useState('')
 
   useEffect(() => {
     setDraftName(field.name)
@@ -255,6 +264,28 @@ export default function FieldColumn({
     await handleFiles(result.files)
   }
 
+  const handleUrlSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const value = urlInput.trim()
+    if (!value) {
+      setUrlError('Please enter an image URL.')
+      return
+    }
+    setUrlError('')
+    const result = await fetchImageFileFromUrl(
+      value,
+      'Must be a direct image URL (.jpg, .png, .webp). Open the image in a new tab and copy that URL.'
+    )
+    if (result.file) {
+      await handleFiles([result.file])
+      setUrlInput('')
+      return
+    }
+    if (result.error) {
+      setUrlError(result.error)
+    }
+  }
+
   const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault()
     event.stopPropagation()
@@ -325,6 +356,23 @@ export default function FieldColumn({
             </span>
           </label>
         </div>
+        <form className="url-form" onSubmit={handleUrlSubmit}>
+          <label className="sr-only" htmlFor={`url-input-${field.id}`}>
+            Paste image URL
+          </label>
+          <input
+            id={`url-input-${field.id}`}
+            className="url-input"
+            type="url"
+            placeholder="Paste image URL"
+            value={urlInput}
+            onChange={(event) => setUrlInput(event.target.value)}
+          />
+          <button type="submit" className="url-button">
+            Add
+          </button>
+        </form>
+        {urlError ? <p className="url-error">{urlError}</p> : null}
         {errorMessage ? <p className="field-error">{errorMessage}</p> : null}
 
         <SortableContext items={field.imageIds} strategy={verticalListSortingStrategy}>
