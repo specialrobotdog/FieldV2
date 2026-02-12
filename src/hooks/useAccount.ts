@@ -12,19 +12,19 @@ const ACCOUNT_NOT_CONFIGURED_MESSAGE =
 
 export function useAccount() {
   const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(isSupabaseConfigured)
+  const [isLoading, setIsLoading] = useState(() => isSupabaseConfigured)
   const [authError, setAuthError] = useState('')
 
   useEffect(() => {
-    if (!supabase) {
-      setIsLoading(false)
+    const client = supabase
+    if (!client) {
       return
     }
 
     let isDisposed = false
 
     const init = async () => {
-      const { data, error } = await supabase.auth.getSession()
+      const { data, error } = await client.auth.getSession()
       if (isDisposed) {
         return
       }
@@ -40,7 +40,7 @@ export function useAccount() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = client.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
       setAuthError('')
     })
