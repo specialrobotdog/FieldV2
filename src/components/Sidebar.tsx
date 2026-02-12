@@ -12,6 +12,7 @@ type SidebarProps = {
   onRemoveField: (fieldId: string) => void
   account: {
     isCloudConfigured: boolean
+    configurationError: string
     isAccountLoading: boolean
     userEmail: string | null
     authError: string
@@ -59,6 +60,7 @@ export default function Sidebar({
 
       <AccountPanel
         isCloudConfigured={account.isCloudConfigured}
+        configurationError={account.configurationError}
         isAccountLoading={account.isAccountLoading}
         userEmail={account.userEmail}
         authError={account.authError}

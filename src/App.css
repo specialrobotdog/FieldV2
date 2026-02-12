@@ -92,6 +92,12 @@
   gap: 8px;
 }
 
+.account-form-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
 .account-form input {
   width: 100%;
   padding: 8px 10px;

@@ -72,6 +72,7 @@ function App() {
         onRemoveField={actions.removeField}
         account={{
           isCloudConfigured: account.isConfigured,
+          configurationError: account.configurationError,
           isAccountLoading: account.isLoading,
           userEmail: sessionUser?.email ?? null,
           authError: account.authError,

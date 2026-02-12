@@ -4,6 +4,7 @@ import type { SyncStatus } from '../hooks/useFieldState'
 
 type AccountPanelProps = {
   isCloudConfigured: boolean
+  configurationError: string
   isAccountLoading: boolean
   userEmail: string | null
   authError: string
@@ -40,6 +41,7 @@ const getSyncLabel = (
 
 export default function AccountPanel({
   isCloudConfigured,
+  configurationError,
   isAccountLoading,
   userEmail,
   authError,
@@ -50,7 +52,6 @@ export default function AccountPanel({
   onSignUp,
   onSignOut,
 }: AccountPanelProps) {
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -64,8 +65,7 @@ export default function AccountPanel({
 
   const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+  const runAuthAction = async (action: 'sign-in' | 'sign-up') => {
     const trimmedEmail = email.trim()
     setInlineError('')
     setMessage('')
@@ -80,7 +80,7 @@ export default function AccountPanel({
       return
     }
 
-    if (mode === 'signup' && password.length < 6) {
+    if (action === 'sign-up' && password.length < 6) {
       setInlineError('Password must be at least 6 characters.')
       return
     }
@@ -88,7 +88,7 @@ export default function AccountPanel({
     setIsSubmitting(true)
 
     const result =
-      mode === 'signin'
+      action === 'sign-in'
         ? await onSignIn(trimmedEmail, password)
         : await onSignUp(trimmedEmail, password)
 
@@ -98,9 +98,14 @@ export default function AccountPanel({
       return
     }
 
-    setMessage(result.message ?? (mode === 'signin' ? 'Signed in.' : 'Account created.'))
+    setMessage(result.message ?? (action === 'sign-in' ? 'Signed in.' : 'Account created.'))
     setPassword('')
     setIsSubmitting(false)
+  }
+
+  const handleLoginSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    await runAuthAction('sign-in')
   }
 
   const handleSignOut = async () => {
@@ -122,8 +127,10 @@ export default function AccountPanel({
       <div className="account-panel">
         <p className="account-title">Account</p>
         <p className="account-note">
-          Cloud login disabled. Add Supabase env vars to enable cross-device sync.
+          Account login unavailable. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to
+          enable cross-device sync.
         </p>
+        {configurationError ? <p className="account-error">{configurationError}</p> : null}
       </div>
     )
   }
@@ -160,24 +167,7 @@ export default function AccountPanel({
         </>
       ) : (
         <>
-          <div className="account-mode-toggle">
-            <button
-              type="button"
-              className={mode === 'signin' ? 'is-active' : ''}
-              onClick={() => setMode('signin')}
-            >
-              Sign in
-            </button>
-            <button
-              type="button"
-              className={mode === 'signup' ? 'is-active' : ''}
-              onClick={() => setMode('signup')}
-            >
-              Create account
-            </button>
-          </div>
-
-          <form className="account-form" onSubmit={handleSubmit}>
+          <form className="account-form" onSubmit={handleLoginSubmit}>
             <label className="sr-only" htmlFor="account-email">
               Email
             </label>
@@ -198,11 +188,21 @@ export default function AccountPanel({
               placeholder="Password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+              autoComplete="current-password"
             />
-            <button type="submit" className="account-action" disabled={isSubmitting}>
-              {isSubmitting ? 'Working...' : mode === 'signin' ? 'Sign in' : 'Create account'}
-            </button>
+            <div className="account-form-actions">
+              <button
+                type="button"
+                className="account-action"
+                disabled={isSubmitting}
+                onClick={() => void runAuthAction('sign-up')}
+              >
+                {isSubmitting ? 'Working...' : 'Sign up'}
+              </button>
+              <button type="submit" className="account-action" disabled={isSubmitting}>
+                {isSubmitting ? 'Working...' : 'Log in'}
+              </button>
+            </div>
           </form>
         </>
       )}
