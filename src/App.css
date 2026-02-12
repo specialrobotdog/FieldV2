@@ -6,7 +6,7 @@
 }
 
 .sidebar {
-  width: 220px;
+  width: 280px;
   border-right: 1px solid #ddd;
   padding: 16px;
   background: #fff;
@@ -27,6 +27,87 @@
   margin: 4px 0 0;
   color: #333;
   font-size: 0.85rem;
+}
+
+.account-panel {
+  border: 1px solid #ddd;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.account-title {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #333;
+}
+
+.account-note {
+  margin: 0;
+  color: #333;
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+.account-sync {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #333;
+}
+
+.account-sync.is-error {
+  color: #7a3d2c;
+}
+
+.account-error {
+  margin: 0;
+  color: #7a3d2c;
+  font-size: 0.75rem;
+}
+
+.account-mode-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.account-mode-toggle button {
+  border: 1px solid #d9d9d9;
+  background: #fff;
+  padding: 6px;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.account-mode-toggle button.is-active {
+  border-color: #000;
+}
+
+.account-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.account-form input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d9d9d9;
+  border-radius: 0;
+  background: #fff;
+}
+
+.account-action {
+  border: 1px solid #d9d9d9;
+  background: #fff;
+  border-radius: 0;
+  padding: 7px 10px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 0.78rem;
 }
 
 .add-field {

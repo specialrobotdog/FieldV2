@@ -1,6 +1,7 @@
 import type { FieldState, Field, ImageItem } from './types'
 
-const STORAGE_KEY = 'fieldv1.state'
+const LEGACY_STORAGE_KEY = 'fieldv1.state'
+const STORAGE_KEY_PREFIX = 'fieldv2.state'
 const STORAGE_SCHEMA = 'field_v1'
 const STORAGE_VERSION = 1
 const SAVE_DEBOUNCE_MS = 250
@@ -16,8 +17,10 @@ type LegacyStoredState = {
   state: FieldState
 }
 
-let saveTimeout: number | undefined
-let pendingState: FieldState | null = null
+const saveTimeoutByScope = new Map<string, number>()
+const pendingStateByScope = new Map<string, FieldState>()
+
+const getStorageKey = (scope: string) => `${STORAGE_KEY_PREFIX}.${scope}`
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
@@ -40,7 +43,7 @@ const isImageItem = (value: unknown): value is ImageItem =>
   typeof value.createdAt === 'number' &&
   (value.note === undefined || typeof value.note === 'string')
 
-const isFieldState = (value: unknown): value is FieldState =>
+export const isFieldState = (value: unknown): value is FieldState =>
   isRecord(value) &&
   Array.isArray(value.fields) &&
   Array.isArray(value.images) &&
@@ -50,16 +53,7 @@ const isFieldState = (value: unknown): value is FieldState =>
 export const storageSchema = STORAGE_SCHEMA
 export const storageVersion = STORAGE_VERSION
 
-export function loadState(): FieldState | null {
-  if (typeof window === 'undefined') {
-    return null
-  }
-
-  const raw = window.localStorage.getItem(STORAGE_KEY)
-  if (!raw) {
-    return null
-  }
-
+const parseStoredState = (raw: string): FieldState | null => {
   try {
     const parsed = JSON.parse(raw) as StoredState | LegacyStoredState
     if (!isRecord(parsed)) {
@@ -92,43 +86,94 @@ export function loadState(): FieldState | null {
   }
 }
 
-export function saveState(state: FieldState) {
+const writeState = (state: FieldState, scope: string) => {
+  const payload: StoredState = {
+    schema: STORAGE_SCHEMA,
+    version: STORAGE_VERSION,
+    state,
+  }
+  const scopedKey = getStorageKey(scope)
+  window.localStorage.setItem(scopedKey, JSON.stringify(payload))
+}
+
+export function loadState(scope = 'guest'): FieldState | null {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  const scopedKey = getStorageKey(scope)
+  const scopedRaw = window.localStorage.getItem(scopedKey)
+  if (scopedRaw) {
+    return parseStoredState(scopedRaw)
+  }
+
+  if (scope !== 'guest') {
+    return null
+  }
+
+  const legacyRaw = window.localStorage.getItem(LEGACY_STORAGE_KEY)
+  if (!legacyRaw) {
+    return null
+  }
+
+  const legacyState = parseStoredState(legacyRaw)
+  if (!legacyState) {
+    return null
+  }
+
+  // Migrate old single-key storage into scoped guest storage.
+  try {
+    writeState(legacyState, 'guest')
+    window.localStorage.removeItem(LEGACY_STORAGE_KEY)
+  } catch {
+    // Ignore migration errors and continue with the in-memory fallback.
+  }
+  return legacyState
+}
+
+export function saveState(state: FieldState, scope = 'guest') {
   if (typeof window === 'undefined') {
     return
   }
 
-  pendingState = state
+  const saveTimeout = saveTimeoutByScope.get(scope)
+  pendingStateByScope.set(scope, state)
   if (saveTimeout) {
     window.clearTimeout(saveTimeout)
   }
 
-  saveTimeout = window.setTimeout(() => {
+  const nextTimeout = window.setTimeout(() => {
+    const pendingState = pendingStateByScope.get(scope)
     if (!pendingState) {
       return
     }
-    const payload: StoredState = {
-      schema: STORAGE_SCHEMA,
-      version: STORAGE_VERSION,
-      state: pendingState,
-    }
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+      writeState(pendingState, scope)
     } catch {
       // Ignore quota or serialization errors.
     } finally {
-      pendingState = null
+      pendingStateByScope.delete(scope)
+      saveTimeoutByScope.delete(scope)
     }
   }, SAVE_DEBOUNCE_MS)
+
+  saveTimeoutByScope.set(scope, nextTimeout)
 }
 
-export function clearState() {
+export function clearState(scope = 'guest') {
   if (typeof window === 'undefined') {
     return
   }
+
+  const saveTimeout = saveTimeoutByScope.get(scope)
   if (saveTimeout) {
     window.clearTimeout(saveTimeout)
-    saveTimeout = undefined
+    saveTimeoutByScope.delete(scope)
   }
-  pendingState = null
-  window.localStorage.removeItem(STORAGE_KEY)
+
+  pendingStateByScope.delete(scope)
+  window.localStorage.removeItem(getStorageKey(scope))
+  if (scope === 'guest') {
+    window.localStorage.removeItem(LEGACY_STORAGE_KEY)
+  }
 }

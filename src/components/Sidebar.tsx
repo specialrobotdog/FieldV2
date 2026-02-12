@@ -1,5 +1,8 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import type { Field, ImageItem } from '../types'
+import type { AccountActionResult } from '../hooks/useAccount'
+import type { SyncStatus } from '../hooks/useFieldState'
+import AccountPanel from './AccountPanel'
 
 type SidebarProps = {
   fields: Field[]
@@ -7,6 +10,18 @@ type SidebarProps = {
   onAddField: (name?: string) => void
   onResetLibrary: () => void
   onRemoveField: (fieldId: string) => void
+  account: {
+    isCloudConfigured: boolean
+    isAccountLoading: boolean
+    userEmail: string | null
+    authError: string
+    syncStatus: SyncStatus
+    syncError: string
+    lastSyncedAt: number | null
+    onSignIn: (email: string, password: string) => Promise<AccountActionResult>
+    onSignUp: (email: string, password: string) => Promise<AccountActionResult>
+    onSignOut: () => Promise<AccountActionResult>
+  }
 }
 
 const countImages = (fields: Field[], images: ImageItem[]) => {
@@ -24,6 +39,7 @@ export default function Sidebar({
   onAddField,
   onResetLibrary,
   onRemoveField,
+  account,
 }: SidebarProps) {
   const [draft, setDraft] = useState('')
   const counts = useMemo(() => countImages(fields, images), [fields, images])
@@ -38,8 +54,21 @@ export default function Sidebar({
     <aside className="sidebar">
       <div className="sidebar-header">
         <h1>Field</h1>
-        <p>Local visual research</p>
+        <p>Visual research workspace</p>
       </div>
+
+      <AccountPanel
+        isCloudConfigured={account.isCloudConfigured}
+        isAccountLoading={account.isAccountLoading}
+        userEmail={account.userEmail}
+        authError={account.authError}
+        syncStatus={account.syncStatus}
+        syncError={account.syncError}
+        lastSyncedAt={account.lastSyncedAt}
+        onSignIn={account.onSignIn}
+        onSignUp={account.onSignUp}
+        onSignOut={account.onSignOut}
+      />
 
       <form className="add-field" onSubmit={handleSubmit}>
         <label className="sr-only" htmlFor="new-field-input">
@@ -80,7 +109,11 @@ export default function Sidebar({
         <button type="button" className="reset-button" onClick={onResetLibrary}>
           Reset library
         </button>
-        <p className="sidebar-hint">Clears local data for this browser.</p>
+        <p className="sidebar-hint">
+          {account.userEmail
+            ? 'Resets this account workspace and local cache.'
+            : 'Clears local data for this browser.'}
+        </p>
       </div>
     </aside>
   )

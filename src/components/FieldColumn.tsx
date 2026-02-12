@@ -1,5 +1,4 @@
 import {
-  useEffect,
   useState,
   type ChangeEvent,
   type DragEvent,
@@ -178,10 +177,6 @@ export default function FieldColumn({
   const [errorMessage, setErrorMessage] = useState('')
   const [urlInput, setUrlInput] = useState('')
   const [urlError, setUrlError] = useState('')
-
-  useEffect(() => {
-    setDraftName(field.name)
-  }, [field.name])
 
   const handleNameCommit = () => {
     const nextName = draftName.trim() || 'Untitled field'

@@ -2,10 +2,35 @@ import { useEffect } from 'react'
 import './App.css'
 import FieldBoard from './components/FieldBoard'
 import Sidebar from './components/Sidebar'
+import { useAccount } from './hooks/useAccount'
 import { useFieldState } from './hooks/useFieldState'
 
 function App() {
-  const { state, actions } = useFieldState()
+  const account = useAccount()
+  const { state, actions, persistence } = useFieldState({
+    cloudUserId: account.user?.id ?? null,
+    cloudEnabled: account.isConfigured,
+  })
+
+  const storageIndicator = !account.isConfigured
+    ? 'Local only'
+    : account.isLoading
+      ? 'Checking account'
+      : !account.user
+        ? 'Guest mode'
+        : persistence.status === 'saving'
+          ? 'Syncing...'
+          : persistence.status === 'loading'
+            ? 'Loading cloud...'
+            : persistence.status === 'error'
+              ? 'Sync error'
+              : 'Cloud synced'
+
+  const headerDescription = !account.isConfigured
+    ? 'Save images locally, reorder them, and compare side by side.'
+    : account.user
+      ? 'Signed in: your workspace syncs to your account across devices.'
+      : 'Sign in to sync your workspace across devices.'
 
   useEffect(() => {
     const preventDocumentDrop = (event: DragEvent) => {
@@ -44,14 +69,26 @@ function App() {
         onAddField={actions.addField}
         onResetLibrary={actions.resetLibrary}
         onRemoveField={actions.removeField}
+        account={{
+          isCloudConfigured: account.isConfigured,
+          isAccountLoading: account.isLoading,
+          userEmail: account.user?.email ?? null,
+          authError: account.authError,
+          syncStatus: persistence.status,
+          syncError: persistence.error,
+          lastSyncedAt: persistence.lastSyncedAt,
+          onSignIn: account.signIn,
+          onSignUp: account.signUp,
+          onSignOut: account.signOut,
+        }}
       />
       <main className="main">
         <div className="main-header">
           <div>
             <h2>Your Fields</h2>
-            <p>Save images locally, reorder them, and compare side by side.</p>
+            <p>{headerDescription}</p>
           </div>
-          <span className="storage-indicator">Local only</span>
+          <span className="storage-indicator">{storageIndicator}</span>
         </div>
         <FieldBoard
           fields={state.fields}
