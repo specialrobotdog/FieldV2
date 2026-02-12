@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
+import { upsertProfile } from '../cloud/profileApi'
 import { isSupabaseConfigured, supabase } from '../cloud/supabase'
 
 export type AccountActionResult = {
@@ -23,6 +24,21 @@ export function useAccount() {
 
     let isDisposed = false
 
+    const syncProfile = async (nextUser: User | null) => {
+      if (!nextUser || isDisposed) {
+        return
+      }
+      try {
+        await upsertProfile(nextUser)
+      } catch (error) {
+        if (!isDisposed) {
+          setAuthError(
+            error instanceof Error ? error.message : 'Failed to initialize profile.'
+          )
+        }
+      }
+    }
+
     const init = async () => {
       const { data, error } = await client.auth.getSession()
       if (isDisposed) {
@@ -32,7 +48,9 @@ export function useAccount() {
       if (error) {
         setAuthError(error.message)
       }
-      setUser(data.session?.user ?? null)
+      const currentUser = data.session?.user ?? null
+      setUser(currentUser)
+      void syncProfile(currentUser)
       setIsLoading(false)
     }
 
@@ -41,7 +59,9 @@ export function useAccount() {
     const {
       data: { subscription },
     } = client.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+      const currentUser = session?.user ?? null
+      setUser(currentUser)
+      void syncProfile(currentUser)
       setAuthError('')
     })
 
