@@ -7,8 +7,9 @@ import { useFieldState } from './hooks/useFieldState'
 
 function App() {
   const account = useAccount()
+  const sessionUser = account.session?.user ?? null
   const { state, actions, persistence } = useFieldState({
-    cloudUserId: account.user?.id ?? null,
+    cloudUserId: sessionUser?.id ?? null,
     cloudEnabled: account.isConfigured,
   })
 
@@ -16,7 +17,7 @@ function App() {
     ? 'Local only'
     : account.isLoading
       ? 'Checking account'
-      : !account.user
+      : !sessionUser
         ? 'Guest mode'
         : persistence.status === 'saving'
           ? 'Syncing...'
@@ -28,7 +29,7 @@ function App() {
 
   const headerDescription = !account.isConfigured
     ? 'Save images locally, reorder them, and compare side by side.'
-    : account.user
+    : sessionUser
       ? 'Signed in: your workspace syncs to your account across devices.'
       : 'Sign in to sync your workspace across devices.'
 
@@ -72,7 +73,7 @@ function App() {
         account={{
           isCloudConfigured: account.isConfigured,
           isAccountLoading: account.isLoading,
-          userEmail: account.user?.email ?? null,
+          userEmail: sessionUser?.email ?? null,
           authError: account.authError,
           syncStatus: persistence.status,
           syncError: persistence.error,

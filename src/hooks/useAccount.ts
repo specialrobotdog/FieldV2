@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { User } from '@supabase/supabase-js'
+import type { Session, User } from '@supabase/supabase-js'
 import { upsertProfile } from '../cloud/profileApi'
 import { isSupabaseConfigured, supabase } from '../cloud/supabase'
 
@@ -12,6 +12,7 @@ const ACCOUNT_NOT_CONFIGURED_MESSAGE =
   'Cloud account sync is not configured for this deployment.'
 
 export function useAccount() {
+  const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(() => isSupabaseConfigured)
   const [authError, setAuthError] = useState('')
@@ -48,7 +49,9 @@ export function useAccount() {
       if (error) {
         setAuthError(error.message)
       }
-      const currentUser = data.session?.user ?? null
+      const currentSession = data.session ?? null
+      const currentUser = currentSession?.user ?? null
+      setSession(currentSession)
       setUser(currentUser)
       void syncProfile(currentUser)
       setIsLoading(false)
@@ -58,8 +61,9 @@ export function useAccount() {
 
     const {
       data: { subscription },
-    } = client.auth.onAuthStateChange((_event, session) => {
-      const currentUser = session?.user ?? null
+    } = client.auth.onAuthStateChange((_event, nextSession) => {
+      const currentUser = nextSession?.user ?? null
+      setSession(nextSession)
       setUser(currentUser)
       void syncProfile(currentUser)
       setAuthError('')
@@ -142,12 +146,13 @@ export function useAccount() {
     () => ({
       isConfigured: isSupabaseConfigured,
       isLoading,
+      session,
       user,
       authError,
       signIn,
       signUp,
       signOut,
     }),
-    [isLoading, user, authError, signIn, signUp, signOut]
+    [isLoading, session, user, authError, signIn, signUp, signOut]
   )
 }
