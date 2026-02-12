@@ -39,6 +39,16 @@ VITE_SUPABASE_ANON_KEY=...
 
 When env vars are not present, the app still works in local-only mode.
 
+### Required env vars (`.env.local` and Vercel)
+
+Set the same two variables in both places:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
+For local development, place them in `.env.local`.
+For Vercel, add them in **Project Settings → Environment Variables** for the environments you deploy.
+
 ## Security model
 
 - Auth is handled by Supabase Auth.

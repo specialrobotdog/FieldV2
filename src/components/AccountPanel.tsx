@@ -54,6 +54,7 @@ export default function AccountPanel({
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [inlineError, setInlineError] = useState('')
   const [message, setMessage] = useState('')
 
   const syncLabel = useMemo(
@@ -61,23 +62,38 @@ export default function AccountPanel({
     [lastSyncedAt, syncError, syncStatus]
   )
 
+  const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!email.trim() || !password) {
-      setMessage('Please enter email and password.')
+    const trimmedEmail = email.trim()
+    setInlineError('')
+    setMessage('')
+
+    if (!isValidEmail(trimmedEmail)) {
+      setInlineError('Enter a valid email address.')
+      return
+    }
+
+    if (!password) {
+      setInlineError('Enter your password.')
+      return
+    }
+
+    if (mode === 'signup' && password.length < 6) {
+      setInlineError('Password must be at least 6 characters.')
       return
     }
 
     setIsSubmitting(true)
-    setMessage('')
 
     const result =
       mode === 'signin'
-        ? await onSignIn(email.trim(), password)
-        : await onSignUp(email.trim(), password)
+        ? await onSignIn(trimmedEmail, password)
+        : await onSignUp(trimmedEmail, password)
 
     if (result.error) {
-      setMessage(result.error)
+      setInlineError(result.error)
       setIsSubmitting(false)
       return
     }
@@ -89,11 +105,13 @@ export default function AccountPanel({
 
   const handleSignOut = async () => {
     setIsSubmitting(true)
+    setInlineError('')
+    setMessage('')
     const result = await onSignOut()
     if (result.error) {
-      setMessage(result.error)
+      setInlineError(result.error)
     } else {
-      setMessage('Signed out.')
+      setMessage('Logged out.')
       setPassword('')
     }
     setIsSubmitting(false)
@@ -104,8 +122,7 @@ export default function AccountPanel({
       <div className="account-panel">
         <p className="account-title">Account</p>
         <p className="account-note">
-          Cloud login is disabled. Add Supabase environment variables to enable cross-device
-          sync.
+          Cloud login disabled. Add Supabase env vars to enable cross-device sync.
         </p>
       </div>
     )
@@ -138,7 +155,7 @@ export default function AccountPanel({
             disabled={isSubmitting}
             onClick={handleSignOut}
           >
-            Sign out
+            Log out
           </button>
         </>
       ) : (
@@ -191,6 +208,7 @@ export default function AccountPanel({
       )}
 
       {authError ? <p className="account-error">{authError}</p> : null}
+      {inlineError ? <p className="account-error">{inlineError}</p> : null}
       {message ? <p className="account-note">{message}</p> : null}
     </div>
   )
