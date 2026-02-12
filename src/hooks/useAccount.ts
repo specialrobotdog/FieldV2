@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { upsertProfile } from '../cloud/profileApi'
-import { isSupabaseConfigured, supabase } from '../cloud/supabase'
+import {
+  isSupabaseConfigured,
+  supabase,
+  supabaseConfigurationError,
+} from '../cloud/supabase'
 
 export type AccountActionResult = {
   error: string | null
@@ -9,7 +13,8 @@ export type AccountActionResult = {
 }
 
 const ACCOUNT_NOT_CONFIGURED_MESSAGE =
-  'Cloud account sync is not configured for this deployment.'
+  supabaseConfigurationError ??
+  'Supabase auth is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.'
 
 export function useAccount() {
   const [session, setSession] = useState<Session | null>(null)
@@ -145,6 +150,7 @@ export function useAccount() {
   return useMemo(
     () => ({
       isConfigured: isSupabaseConfigured,
+      configurationError: ACCOUNT_NOT_CONFIGURED_MESSAGE,
       isLoading,
       session,
       user,

@@ -1,1 +1,5 @@
-export { isSupabaseConfigured, supabase } from '../supabaseClient'
+export {
+  isSupabaseConfigured,
+  supabase,
+  supabaseConfigurationError,
+} from '../lib/supabaseClient'

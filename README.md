@@ -47,7 +47,22 @@ Set the same two variables in both places:
 - `VITE_SUPABASE_ANON_KEY`
 
 For local development, place them in `.env.local`.
-For Vercel, add them in **Project Settings → Environment Variables** for the environments you deploy.
+For Vercel, add them in **Project Settings -> Environment Variables** for the environments you deploy.
+Do not commit `.env.local`.
+
+### Vercel deployment setup and verification
+
+1. In Vercel, open **Project -> Settings -> Environment Variables**.
+2. Add:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+3. Save changes and trigger a redeploy (or deploy a new commit).
+4. Open the deployed site and confirm the Account box shows the login form:
+   - Email input
+   - Password input
+   - Sign up button
+   - Log in button
+5. Log in with a valid user and verify the Account box updates to show your email and a Log out button.
 
 ## Security model
 
